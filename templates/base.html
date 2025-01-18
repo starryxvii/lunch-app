@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}School Lunch App{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-r from-blue-500 to-green-400 text-gray-800 flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-600">LunchApp</h1>
+            {% if session.get("user") %}
+            <div class="flex items-center space-x-4">
+                <p class="text-gray-600 text-sm">Logged in as: <span class="font-medium">{{ session.get('user') }}</span></p>
+                <a href="/logout" 
+                   class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-all">
+                   Logout
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white shadow-inner py-4">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm text-gray-500">© 2025 LunchApp. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
