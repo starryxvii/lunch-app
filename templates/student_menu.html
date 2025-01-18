@@ -13,6 +13,7 @@
             <div class="text-center">
                 <h2 class="text-xl font-semibold text-gray-800">{{ item.name }}</h2>
                 <p class="text-gray-600 text-sm mt-1">{{ item.description }}</p>
+                <p class="text-gray-500 text-sm mt-1">Calories: {{ item.calories }}</p>
             </div>
         </div>
     </label>
@@ -22,7 +23,4 @@
         Submit
     </button>
 </form>
-
-<!-- Include the external JavaScript file -->
-<script src="{{ url_for('static', filename='js/menu.js') }}"></script>
 {% endblock %}
