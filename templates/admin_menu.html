@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Menu{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Manage Menu</h2>
+
+    <table class="table-auto w-full border-collapse border border-gray-200 rounded-lg mb-6">
+        <thead>
+            <tr class="bg-gray-100">
+                <th class="px-4 py-2 border">Name</th>
+                <th class="px-4 py-2 border">Description</th>
+                <th class="px-4 py-2 border">Image</th>
+                <th class="px-4 py-2 border">Calories</th>
+                <th class="px-4 py-2 border">Protein</th>
+                <th class="px-4 py-2 border">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in menu %}
+            <tr>
+                <td class="px-4 py-2 border">{{ item[1] }}</td>
+                <td class="px-4 py-2 border">{{ item[2] }}</td>
+                <td class="px-4 py-2 border">
+                    <img src="{{ url_for('static', filename=item[3]) }}" class="h-12">
+                </td>
+                <td class="px-4 py-2 border">{{ item[4] }} kcal</td>
+                <td class="px-4 py-2 border">{{ item[5] }} g</td>
+                <td class="px-4 py-2 border">
+                    <a href="/delete_menu_item/{{ item[0] }}" 
+                       class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                        Delete
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Add New Menu Item</h2>
+    <form action="/add_menu_item" method="POST" class="grid grid-cols-1 gap-4">
+        <input type="text" name="name" placeholder="Name" required class="px-4 py-2 border rounded">
+        <input type="text" name="description" placeholder="Description" required class="px-4 py-2 border rounded">
+        <input type="text" name="image" placeholder="Image Path" required class="px-4 py-2 border rounded">
+        <input type="number" name="calories" placeholder="Calories (kcal)" required class="px-4 py-2 border rounded">
+        <input type="number" name="protein" placeholder="Protein" required class="px-4 py-2 border rounded">
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            Add Menu Item
+        </button>
+    </form>
+</div>
+{% endblock %}

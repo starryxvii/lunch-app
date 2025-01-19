@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Meals{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+
+    <!-- Schedule Meals Section -->
+    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Schedule Meals</h2>
+    <form action="/schedule_menu" method="POST" class="grid grid-cols-1 gap-4 mb-6">
+        <input type="date" name="scheduled_date" required class="px-4 py-2 border rounded">
+        <select name="menu_id" required class="px-4 py-2 border rounded">
+            {% for item in menu %}
+            <option value="{{ item[0] }}">{{ item[1] }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            Schedule Meal
+        </button>
+    </form>
+
+    <!-- Scheduled Meals Section -->
+    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Scheduled Meals</h2>
+    <table class="table-auto w-full border-collapse border border-gray-200 rounded-lg">
+        <thead>
+            <tr class="bg-gray-100">
+                <th class="px-4 py-2 border">Date</th>
+                <th class="px-4 py-2 border">Name</th>
+                <th class="px-4 py-2 border">Description</th>
+                <th class="px-4 py-2 border">Calories</th>
+                <th class="px-4 py-2 border">Image</th>
+                <th class="px-4 py-2 border">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for scheduled in scheduled_menu %}
+            <tr>
+                <td class="px-4 py-2 border">{{ scheduled[0] }}</td>
+                <td class="px-4 py-2 border">{{ scheduled[1] }}</td>
+                <td class="px-4 py-2 border">{{ scheduled[2] }}</td>
+                <td class="px-4 py-2 border">{{ scheduled[3] }} kcal</td>
+                <td class="px-4 py-2 border">
+                    <img src="{{ url_for('static', filename=scheduled[4]) }}" class="h-12">
+                </td>
+                <td class="px-4 py-2 border">
+                    <form action="/delete_scheduled_meal" method="POST">
+                        <input type="hidden" name="scheduled_date" value="{{ scheduled[0] }}">
+                        <input type="hidden" name="menu_id" value="{{ scheduled[5] }}">
+                        <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                            Remove
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+{% endblock %}
