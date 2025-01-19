@@ -1,17 +1,27 @@
 {% extends "base.html" %}
 
-{% block title %}Menu{% endblock %}
+{% block title %}Today's Menu{% endblock %}
 
 {% block content %}
 <h1 class="text-4xl font-bold text-center mb-8 text-white">Today's Lunch Menu</h1>
 
 {% if message %}
 <p class="text-center text-gray-600 mb-6">{{ message }}</p>
-{% else %}
-<form action="/submit_order" method="POST" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 justify-center max-w-4xl mx-auto">
+{% endif %}
+
+<p class="text-center text-white mb-6">
+    Your selected preference: <span class="font-bold">{{ preference | title }}</span>
+</p>
+
+{% if preordered_meal %}
+<p class="text-center text-white font-bold mb-4">Preordered Meal: {{ preordered_meal }}</p>
+{% endif %}
+
+<form action="/student_menu" method="POST" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 justify-center max-w-4xl mx-auto">
     {% for item in menu %}
-    <label class="meal-option cursor-pointer bg-white p-4 rounded-lg shadow-lg hover:scale-105 hover:ring-2 hover:ring-blue-400 transition-all duration-200 w-72 mx-auto">
-        <input type="radio" name="meal" value="{{ item.name }}" class="hidden" required>
+    <label class="meal-option cursor-pointer bg-white p-4 rounded-lg shadow-lg hover:scale-105 hover:ring-2 hover:ring-blue-400 transition-all duration-200 w-72 mx-auto
+           {% if preordered_meal == item.name %}ring-2 ring-blue-500 bg-blue-100{% endif %}">
+        <input type="radio" name="meal" value="{{ item.name }}" class="hidden" {% if preordered_meal == item.name %}checked{% endif %}>
         <div class="relative">
             <img src="{{ url_for('static', filename=item.image) }}" alt="{{ item.name }}" class="w-full h-40 object-cover rounded-lg mb-4">
             <div class="text-center">
@@ -28,5 +38,5 @@
         Submit
     </button>
 </form>
-{% endif %}
+<script src="{{ url_for('static', filename='js/menu.js') }}"></script>
 {% endblock %}

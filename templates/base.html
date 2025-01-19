@@ -8,6 +8,7 @@
 </head>
 <body class="min-h-screen bg-gradient-to-r from-blue-500 to-green-400 text-gray-800 flex flex-col">
 
+    <!-- Header -->
     <header class="bg-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold text-blue-600">CafeClick</h1>
@@ -16,19 +17,23 @@
                 <p class="text-gray-600">
                     Signed in as <span class="font-semibold text-gray-800">{{ session.get("user") }}</span>
                 </p>
-                {% endif %}
                 {% if session.get("user") == "admin" %}
                 <nav class="space-x-4">
                     <a href="/admin/orders" class="text-gray-600 hover:text-blue-600">Orders</a>
                     <a href="/admin/schedule" class="text-gray-600 hover:text-blue-600">Schedule Meals</a>
                     <a href="/admin/menu" class="text-gray-600 hover:text-blue-600">Manage Menu</a>
                 </nav>
+                {% else %}
+                <nav class="space-x-4">
+                    <a href="/preferences" class="text-gray-600 hover:text-blue-600">Preferences</a>
+                    <a href="/student_menu" class="text-gray-600 hover:text-blue-600">Today's Menu</a>
+                </nav>
                 {% endif %}
                 <a href="/logout" class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600">Logout</a>
+                {% endif %}
             </div>
         </div>
     </header>
-    
 
     <!-- Main Content -->
     <main class="flex-grow">
@@ -40,7 +45,7 @@
     <!-- Footer -->
     <footer class="bg-white shadow-inner py-4">
         <div class="max-w-7xl mx-auto px-4 text-center">
-            <p class="text-sm text-gray-500">© 2025 CafeClick. All Rights Reserved.</p>
+            <p class="text-sm text-gray-500">© 2025 LunchApp. All Rights Reserved.</p>
         </div>
     </footer>
 

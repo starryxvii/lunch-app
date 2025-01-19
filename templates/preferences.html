@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Preferences{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Set Your Meal Preference</h1>
+
+    {% if message %}
+    <p class="text-green-500 mb-4">{{ message }}</p>
+    {% endif %}
+
+    <form method="POST">
+        <label class="block mb-4">
+            <span class="text-gray-700">Meal Preference</span>
+            <select name="preference" class="block w-full mt-1 p-2 border rounded">
+                <option value="least calories" {% if preference == 'least calories' %}selected{% endif %}>Least Calories</option>
+                <option value="most calories" {% if preference == 'most calories' %}selected{% endif %}>Most Calories</option>
+                <option value="most protein" {% if preference == 'most protein' %}selected{% endif %}>Most Protein</option>
+            </select>
+        </label>
+        <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded">Save Preference</button>
+    </form>
+</div>
+{% endblock %}

@@ -12,7 +12,7 @@ def init_db():
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
 
-    # Create the orders table with timestamp
+    # Create the orders table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,7 +23,7 @@ def init_db():
         )
     """)
 
-    # Create the menu table with calories and protein
+    # Create the menu table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS menu (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,7 +35,7 @@ def init_db():
         )
     """)
 
-    # Create the daily_menu table for scheduling
+    # Create the daily_menu table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS daily_menu (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,7 +45,15 @@ def init_db():
         )
     """)
 
-    # Add default menu items if the menu table is empty
+    # Create the students table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS students (
+            id TEXT PRIMARY KEY,
+            preferences TEXT DEFAULT NULL
+        )
+    """)
+
+    # Add default menu items
     cursor.execute("SELECT COUNT(*) FROM menu")
     if cursor.fetchone()[0] == 0:
         default_menu = [
@@ -58,21 +66,38 @@ def init_db():
             default_menu
         )
 
-    # Schedule default meals for today if no schedules exist
-    today = datetime.now().date()
-    cursor.execute("SELECT COUNT(*) FROM daily_menu WHERE scheduled_date = ?", (today,))
-    if cursor.fetchone()[0] == 0:
-        # Retrieve all menu item IDs
-        cursor.execute("SELECT id FROM menu")
-        menu_ids = [row[0] for row in cursor.fetchall()]
-
-        # Schedule all menu items for today
-        for menu_id in menu_ids:
-            cursor.execute("INSERT INTO daily_menu (scheduled_date, menu_id) VALUES (?, ?)", (today, menu_id))
-
     conn.commit()
     conn.close()
 
+@app.route("/preferences", methods=["GET", "POST"])
+def preferences():
+    if "user" not in session or not session["user"].isdigit():
+        return redirect(url_for("login"))
+
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        preference = request.form["preference"]
+        student_id = session["user"]
+
+        cursor.execute("""
+            INSERT INTO students (id, preferences)
+            VALUES (?, ?)
+            ON CONFLICT(id) DO UPDATE SET preferences = ?
+        """, (student_id, preference, preference))
+
+        conn.commit()
+        message = "Preference updated successfully."
+    else:
+        student_id = session["user"]
+        cursor.execute("SELECT preferences FROM students WHERE id = ?", (student_id,))
+        result = cursor.fetchone()
+        preference = result[0] if result else None
+        message = None
+
+    conn.close()
+    return render_template("preferences.html", preference=preference, message=message)
 
 
 @app.route("/")
@@ -104,32 +129,86 @@ def logout():
     session.pop("user", None)
     return redirect(url_for("login"))
 
-@app.route("/student_menu")
+@app.route("/student_menu", methods=["GET", "POST"])
 def student_menu():
     if "user" not in session or not session["user"].isdigit():
         return redirect(url_for("login"))
 
+    student_id = session["user"]
     today = datetime.now().date()
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
 
-    # Retrieve meals scheduled for today
+    # Get student preference
+    cursor.execute("SELECT preferences FROM students WHERE id = ?", (student_id,))
+    result = cursor.fetchone()
+    preference = result[0] if result else None
+
+    # Get today's menu
     cursor.execute("""
-        SELECT menu.name, menu.description, menu.image, menu.calories, menu.protein
+        SELECT menu.id, menu.name, menu.description, menu.image, menu.calories, menu.protein
         FROM daily_menu
         JOIN menu ON daily_menu.menu_id = menu.id
         WHERE daily_menu.scheduled_date = ?
     """, (today,))
     menu = cursor.fetchall()
+
+    # Determine preordered meal based on preference
+    preordered_meal = None
+    if preference and menu:
+        if preference == "least calories":
+            cursor.execute("""
+                SELECT menu.name
+                FROM daily_menu
+                JOIN menu ON daily_menu.menu_id = menu.id
+                WHERE daily_menu.scheduled_date = ?
+                ORDER BY menu.calories ASC
+                LIMIT 1
+            """, (today,))
+        elif preference == "most calories":
+            cursor.execute("""
+                SELECT menu.name
+                FROM daily_menu
+                JOIN menu ON daily_menu.menu_id = menu.id
+                WHERE daily_menu.scheduled_date = ?
+                ORDER BY menu.calories DESC
+                LIMIT 1
+            """, (today,))
+        elif preference == "most protein":
+            cursor.execute("""
+                SELECT menu.name
+                FROM daily_menu
+                JOIN menu ON daily_menu.menu_id = menu.id
+                WHERE daily_menu.scheduled_date = ?
+                ORDER BY menu.protein DESC
+                LIMIT 1
+            """, (today,))
+        else:
+            cursor.execute("""
+                SELECT menu.name
+                FROM daily_menu
+                JOIN menu ON daily_menu.menu_id = menu.id
+                WHERE daily_menu.scheduled_date = ?
+                ORDER BY menu.calories ASC
+                LIMIT 1
+            """, (today,))
+        
+        preordered_meal_result = cursor.fetchone()
+        preordered_meal = preordered_meal_result[0] if preordered_meal_result else None
+
+    # Handle manual overrides
+    if request.method == "POST":
+        selected_meal = request.form["meal"]
+        cursor.execute("INSERT INTO orders (student_id, meal) VALUES (?, ?)", (student_id, selected_meal))
+        conn.commit()
+        conn.close()
+        return render_template("confirmation.html", meal=selected_meal)
+
     conn.close()
-
-    if not menu:
-        return render_template("student_menu.html", menu=[], message="No meals are scheduled for today.")
-
     return render_template("student_menu.html", menu=[
-        {"name": row[0], "description": row[1], "image": row[2], "calories": row[3], "protein": row[4]}
+        {"id": row[0], "name": row[1], "description": row[2], "image": row[3], "calories": row[4], "protein": row[5]}
         for row in menu
-    ])
+    ], preference=preference, preordered_meal=preordered_meal)
 
 
 @app.route("/submit_order", methods=["POST"])
@@ -257,7 +336,7 @@ def mark_picked_up():
     conn.commit()
     conn.close()
 
-    return redirect(url_for("admin_dashboard"))
+    return redirect(url_for("admin_orders"))
 
 @app.route("/api/orders")
 def get_orders():
@@ -295,15 +374,40 @@ def schedule_menu():
 
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
+
+    # Schedule the meal
     cursor.execute(
         "INSERT INTO daily_menu (scheduled_date, menu_id) VALUES (?, ?)", 
         (scheduled_date, menu_id)
     )
+
+    # Automated preordering for students
+    cursor.execute("SELECT id, preferences FROM students")
+    students = cursor.fetchall()
+
+    for student_id, preference in students:
+        if preference:
+            cursor.execute("""
+                SELECT menu.name
+                FROM daily_menu
+                JOIN menu ON daily_menu.menu_id = menu.id
+                WHERE daily_menu.scheduled_date = ?
+                ORDER BY
+                    CASE
+                        WHEN ? = 'least calories' THEN menu.calories
+                        WHEN ? = 'most calories' THEN menu.calories DESC
+                        WHEN ? = 'most protein' THEN menu.protein DESC
+                    END
+                LIMIT 1
+            """, (scheduled_date, preference, preference, preference))
+            meal = cursor.fetchone()
+            if meal:
+                cursor.execute("INSERT INTO orders (student_id, meal) VALUES (?, ?)", (student_id, meal[0]))
+
     conn.commit()
     conn.close()
 
-    return redirect(url_for("admin_schedule"))  # Redirect to Schedule Meals page
-
+    return redirect(url_for("admin_schedule"))
 
 @app.route("/get_scheduled_menu/<date>")
 def get_scheduled_menu(date):
